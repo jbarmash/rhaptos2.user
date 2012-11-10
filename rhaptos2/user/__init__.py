@@ -45,7 +45,7 @@ __version__ = pkg_resources.require("rhaptos2.user")[0].version
 
 APPTYPE = 'rhaptos2user'
 VERSION = __version__
-_app = None
+app = None
 
 
 """
@@ -54,7 +54,6 @@ Instantiation
 Now using a "appfactory" - sanity from pumazi
 
   from rhaptos2.user import set_app
-  confd = rhaptos2.common.conf.get_config(["rhaptos2user", "bamboo"])
   _app = Flask("rhaptos2.user")
   set_app(_app, confd)
 
@@ -69,28 +68,22 @@ Now using a "appfactory" - sanity from pumazi
 
 def get_app():
     """Get the application object"""
-    global _app
-    return _app
+    global app
+    return app
 
-def set_app(app, _confd={}):
+def set_app(app_in):
     """Set the global application object
 
     """
-    global _app
-    _app = app
+    global app
+    app = app_in
 
-    #.. todo:: why not pass confd around all time instead of app.config???
-    _app.config.update(_confd)
-    hdlrs = set_logger(APPTYPE, _confd)
+    hdlrs = set_logger(APPTYPE, app.config)
     for hdlr in hdlrs:
-        _app.logger.addHandler(hdlr)
+        app.logger.addHandler(hdlr)
 
-    dolog("DEBUG", "test")
- 
-    #allow views to use the app in decorators
-    import rhaptos2.user.views
-
-    return _app
+    dolog("DEBUG", "Initialising app")
+    return app
 
 
 
@@ -153,19 +146,16 @@ def dolog(lvl, msg, caller=None, statsd=None):
     except Exception, e:
         print extra, msg, e
 
-def set_logger(apptype, _confd):
+def set_logger(apptype, app.config):
     """
 
-    useage:
-        lg.warn("Help", extra={'statsd':['rhaptos2.repo.module',
-                                         'bamboo.foo.bar']})
 
     """
 
 
     ## define handlers
-    stats_hdlr = log.StatsdHandler(_confd['rhaptos2user_statsd_host'],
-                    int(_confd['rhaptos2user_statsd_port']))
+    stats_hdlr = log.StatsdHandler(app.config['bamboo_global']['statsd_host'],
+                    int(app.config['bamboo_global']['statsd_port']))
 
     stream_hdlr = logging.StreamHandler()
 
