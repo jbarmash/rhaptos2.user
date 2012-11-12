@@ -69,7 +69,7 @@ def set_app(app_in):
     global app
     app = app_in
 
-    hdlrs = set_logger(APPTYPE, app.config)
+    hdlrs = set_logger(APPTYPE)
     for hdlr in hdlrs:
         app.logger.addHandler(hdlr)
 
@@ -133,11 +133,11 @@ def dolog(lvl, msg, caller=None, statsd=None):
 
 
     try:
-        _app.logger.log(goodlvl, msg, extra=extra)
+        app.logger.log(goodlvl, msg, extra=extra)
     except Exception, e:
         print extra, msg, e
 
-def set_logger(apptype, app.config):
+def set_logger(apptype):
     """
 
 
