@@ -51,15 +51,6 @@ app = None
 """
 Instantiation 
 
-Now using a "appfactory" - sanity from pumazi
-
-  from rhaptos2.user import set_app
-  _app = Flask("rhaptos2.user")
-  set_app(_app, confd)
-
-  ###now global _app in __init__ is a Flask app
-  ### then app = get_app() in any module will
-  ### put it into glboal module namespave for ease each time
 
 
 """

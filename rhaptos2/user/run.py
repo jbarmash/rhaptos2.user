@@ -73,7 +73,6 @@ def main():
 
     confd = conf.get_config(opts.confpath)
     app = make_app(confd)
-    set_logger(APPTYPE)
     print app, "<-- Intialised app"
 
     # NOTE Do not use module reloading, even in debug mode, because it
