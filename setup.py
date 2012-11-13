@@ -41,9 +41,7 @@ setup(name='rhaptos2.user',
               ,"pylint"
               ,"python-memcached"
               ,"nose"
-              ,"rhaptos2.common"
               ,"unittest-xml-reporting"
-              ,"mikado.oss.doctest_additions"
                            ],
           scripts=glob.glob('scripts/*'),
           package_data={'rhaptos2.user': ['templates/*.*', 
