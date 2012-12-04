@@ -36,6 +36,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="ghpages.html" title="Setting up python packages to use Sphinx and Github Pages"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -53,6 +56,26 @@
   <div class="section" id="backend">
 <h1>Backend<a class="headerlink" href="#backend" title="Permalink to this headline">¶</a></h1>
 <p>Things to note;</p>
+<span class="target" id="module-rhaptos2.user.backend"></span><p>Calling structure</p>
+<p>This may seem complex (it is) but it si at least clear and avoids the usual 
+complicated waving of SQLAlchmey</p>
+<ol class="arabic simple">
+<li>THe models exist in usermodel.</li>
+<li>The session mgmt is in backend (maybe rename)</li>
+<li>The two together should be setup in db_controller (A nod to MVC)
+import the sesison, ise ti to save models.</li>
+</ol>
+<p>This focuses on postgres</p>
+<p>Ship.__table__.columns will provide you with columns information
+Ship.__table__.foreign_keys will list foreign keys
+Ship.__table__.constraints, Ship.__table__.indexes are other properties you might find useful</p>
+<p># Basics - I want to 
+#1. Set up a simple working version that 
+#2. setup tests
+#3. get a jsonifiable solution to support 1:m and M;N relations
+#4. work this as standa lone with tests so it can bio-directionally deal with User JSON and later modul#e JSON
+#   and do so standalo=ne in tests
+#http://docs.sqlalchemy.org/en/rel_0_7/orm/relationships.html</p>
 </div>
 
 
@@ -98,6 +121,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="ghpages.html" title="Setting up python packages to use Sphinx and Github Pages"
              >next</a> |</li>

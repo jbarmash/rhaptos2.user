@@ -36,6 +36,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="usermodel.html" title="Usermodel"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -50,8 +53,51 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="testing">
-<h1>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-rhaptos2.user.tests.runtests">
+<span id="testing"></span><h1>Testing<a class="headerlink" href="#module-rhaptos2.user.tests.runtests" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="runtests">
+<h2>runtests<a class="headerlink" href="#runtests" title="Permalink to this headline">¶</a></h2>
+<p>This is a script (not setup as as an entry point, probably needs to be)
+to execute tests in <a href="#id1"><span class="problematic" id="id2">:rf:`rhaptos2.user`</span></a></p>
+<p>useage:</p>
+<p>Run all tests with the given config</p>
+<blockquote>
+<div>python runtests.py &#8211;config=../../../local.ini</div></blockquote>
+<p>Run only the test modules in modules</p>
+<blockquote>
+<div>python runtests.py &#8211;config=../../../local.ini</div></blockquote>
+<p>Prepopulate (does not build tables)</p>
+<blockquote>
+<div>python runtests.py &#8211;config=../../../local.ini &#8211;prepopulate=Y</div></blockquote>
+<p>this version will connect to the DB in local.ini, and (assuming the tables exist)
+will insert through psycopg2 five test users.</p>
+<p>(OK I swapped out the sqlalchemy prepopulation (which creates tables too) so the whole 
+table creation thing is a little awkward and needs fixing)</p>
+<dl class="function">
+<dt id="rhaptos2.user.tests.runtests.prepopulate">
+<tt class="descclassname">rhaptos2.user.tests.runtests.</tt><tt class="descname">prepopulate</tt><big>(</big><em>settings</em><big>)</big><a class="reference internal" href="_modules/rhaptos2/user/tests/runtests.html#prepopulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rhaptos2.user.tests.runtests.prepopulate" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Warn :</th><td class="field-body">Horrible hack</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Annoyance: The Configuration object from pumazi (as is convention)</dt>
+<dd>turns ini section &#8220;[app]&#8221; into the root of the object/dict
+However nosetest_config does NOT.
+So, I end up with two config dicts 
+- normal: one with [app] in the current namespace and all sections one lower
+- nosetest_config - straight ini sections-&gt; levels in dict.
+I can either fiddle with normal dict here and add in a [app] dict level
+or frig the .ini file</dd>
+</dl>
+<p>This is just a horrible hack.</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -63,6 +109,14 @@
             <p class="logo"><a href="index.html">
               <img class="logo" src="static/rhaptos2userlogo.jpg" alt="Logo"/>
             </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Testing</a><ul>
+<li><a class="reference internal" href="#runtests">runtests</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="sqlinjection.html"
                         title="previous chapter">SQL Injection and SQLAlchemy</a></p>
@@ -97,6 +151,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="usermodel.html" title="Usermodel"
              >next</a> |</li>

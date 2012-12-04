@@ -1,0 +1,663 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>rhaptos2.user.usermodel &mdash; Rhaptos2 User Server</title>
+    
+    <link rel="stylesheet" href="../../../static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="top" title="Rhaptos2 User Server" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Rhaptos2 User Server</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for rhaptos2.user.usermodel</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python</span>
+<span class="c">#! -*- coding: utf-8 -*-</span>
+
+<span class="c">###  </span>
+<span class="c"># Copyright (c) Rice University 2012</span>
+<span class="c"># This software is subject to</span>
+<span class="c"># the provisions of the GNU Lesser General</span>
+<span class="c"># Public License Version 2.1 (LGPL).</span>
+<span class="c"># See LICENCE.txt for details.</span>
+<span class="c">###</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Json in and out</span>
+<span class="sd">---------------</span>
+
+<span class="sd">JSON out is a realtively do-able approach - we shall define a method &quot;todict&quot; </span>
+<span class="sd">on each SA object, and this shall be manually adjusted so that when it is called</span>
+<span class="sd">it itself calls the same method on &quot;children&quot; objects.  THe presumed existence of children objects is fine for our current use cases.</span>
+
+<span class="sd">SA appears not to give decent support to determining types of relationships - but this is so unlikely it is a matter of reading their docs more now.</span>
+
+<span class="sd">In is a interesting matter - I intend to do the simple case of one json doc, one mapping (schema specific) and then setattr work.</span>
+
+
+
+<span class="sd">Discussion on serialising rows</span>
+<span class="sd">------------------------------</span>
+
+<span class="sd">It used to be easy to serialise a database row.  Really.</span>
+<span class="sd">But here we are really serialsing nested objects - and the dangers that allows </span>
+<span class="sd">and the edge cases are aquite high.  I cannot find a simple clean and supported method to</span>
+<span class="sd">arbitraily serialise SQ objects to dict (and on to JSON)</span>
+
+<span class="sd">So, the best approach (and variations of this are around the</span>
+<span class="sd">literature (you know, on the Blue Googles)) is to craft an extra</span>
+<span class="sd">function in each SA object, that supports a serialisable function (probably __iter__)</span>
+<span class="sd">and that function returns serialised data that we control</span>
+
+<span class="sd">Pretty much exactly what I have been doing.</span>
+
+<span class="sd">In short, there are ways to do this arbitrarily deep and recursive -</span>
+<span class="sd">but the magic is deep in SA and I would worry about defending the edge</span>
+<span class="sd">cases (</span>
+
+<span class="sd">SA mindset - the SA mindset is (IMO) about solving the ORM bete-noir</span>
+<span class="sd">of inheritence in relations/entites.  THat is if a professor and a</span>
+<span class="sd">student both inherit from a person class, how is that handeled in the</span>
+<span class="sd">database, and how to map that in the ORM. My feeling is not to do so.  However a lot of SA becomes easier to understand when you rembmer this and its iomplications.</span>
+
+<span class="sd">Some notes:</span>
+
+<span class="sd">sqlalchemy.ext.serializer exists to support pickling (with pickle</span>
+<span class="sd">module) of queries, expressions and other internal SQLAlchemy objects,</span>
+<span class="sd">it doesn&#39;t deal with model objects. In no way it will help you to</span>
+<span class="sd">serialize model objects to XML.</span>
+<span class="sd">http://stackoverflow.com/questions/1740817/sqlalchemy-rest-serialization</span>
+
+<span class="sd">http://trac.turbogears.org/ticket/1582</span>
+<span class="sd">http://docs.sqlalchemy.org/en/latest/orm/relationships.html</span>
+<span class="sd">https://groups.google.com/forum/?fromgroups=#!topic/sqlalchemy/hY13qaWuEGY</span>
+<span class="sd">https://github.com/mitsuhiko/flask/blob/master/flask/json.py</span>
+<span class="sd">http://pieceofpy.com/2009/08/17/sqlalchemy-and-json-w-pylons-best-practices/</span>
+
+<span class="sd">.. todo:: move this to real docs not code.</span>
+
+
+<span class="sd">Issues: repeating code - either use external calls or inherit</span>
+<span class="sd">: we do not use jsonpickle - its very python specific - at least datetime transforms are ISOformat</span>
+
+
+<span class="sd">usermodel.py</span>
+<span class="sd">============</span>
+
+<span class="sd">Represents the SQLALchemy classes and assoc functions, that store user</span>
+<span class="sd">details in web server, and persist to postgres dbase.</span>
+
+<span class="sd">We have two main models :py:class:User and :py:class:Identifier.</span>
+<span class="sd">One User may have many identifiers, but one identifier may only have</span>
+<span class="sd">one User.  Each identier is either a openid or a persona.</span>
+
+<span class="sd">A user_id is a urn of form &lt;domain_of_originating_repo&gt;-&lt;uuid(4)&gt;</span>
+<span class="sd">&quot;org.cnx.user.f9647df6-cc6e-4885-9b53-254aa55a3383&quot;</span>
+
+
+<span class="sd">API</span>
+
+<span class="sd">:/user/:</span>
+<span class="sd">    Support POST PUT GET [DELETE]</span>
+<span class="sd">    Is keyed on *user_id* - the uuid form above</span>
+<span class="sd">    /user/org.cnx.user.f9647df6-cc6e-4885-9b53-254aa55a3383</span>
+<span class="sd">    will return a *user profile* in JSON form</span>
+
+<span class="sd">:/users/:</span>
+<span class="sd">    Support only GET</span>
+
+<span class="sd">:/users/:</span>
+<span class="sd">    GET - will return list of all users - is only for dev. and </span>
+<span class="sd">          hardcoded to max 25</span>
+
+<span class="sd">:/users/?fullname=bob:</span>
+<span class="sd">    GET - searches the key field in User object and returns</span>
+<span class="sd">          JSON encoded user profiles</span>
+
+
+<span class="sd">A specialised form of the above search is</span>
+
+<span class="sd">/user/?openid=http://xxx</span>
+<span class="sd">/user/?persona=p@x.com</span>
+
+<span class="sd">These explicitly want to look up existing authetnitcatd identifiers in our dbase.</span>
+<span class="sd">(ie part of signon process)</span>
+
+
+<span class="sd">views</span>
+<span class="sd">-----</span>
+
+<span class="sd">:search_user():</span>
+
+<span class="sd">:post_user(&lt;dict&gt;):</span>
+<span class="sd">     user_id MUST NOT be present</span>
+<span class="sd">     Will overwrite all fields provided.</span>
+
+<span class="sd">:put_user(&lt;dict&gt;):</span>
+<span class="sd">     user_id MUST be present.</span>
+<span class="sd">     We will replace all fields provided </span>
+
+<span class="sd">:get_user(&lt;user_id&gt;):</span>
+<span class="sd">     IF search string present, treat it as a search</span>
+<span class="sd">     else search_user</span>
+
+<span class="sd">:search_user(authenticatedID):</span>
+<span class="sd">     see above </span>
+
+<span class="sd">:delete_user():</span>
+<span class="sd">      TBD</span>
+
+
+<span class="sd">Matching usermodel</span>
+
+<span class="sd">Naming convention</span>
+
+<span class="sd">distinguohs between a userprofile_dict and userprofile_json</span>
+<span class="sd">                      identifier_dict and identifier_json</span>
+
+
+<span class="sd">iterating over models</span>
+
+<span class="sd">&gt;&gt;&gt; x = [prop for prop in usermodel.User.__mapper__.iterate_properties if isinstance(prop, sqlalchemy.orm.properties.RelationshipProperty)]</span>
+<span class="sd">&gt;&gt;&gt; u.__getattribute__(x[0].key)</span>
+<span class="sd">[&lt;rhaptos2.user.usermodel.Identifier object at 0x8073dd890&gt;]</span>
+
+<span class="sd">This fails the smell test - a child object (relationship) has a relationship back to the parent - and no obvious way of determining the directionality or visted state (ie loops)</span>
+<span class="sd">This is fair - parent child is only a common use case, nopt exclusive - but I want to deal with the common use case.</span>
+
+
+
+<span class="sd">testjson = &#39;{&quot;interests&quot;: null, &quot;identifiers&quot;: [{&quot;identifierstring&quot;: &quot;http://fake1.example.com/&quot;, &quot;user_id&quot;: &quot;org.cnx.user-f7887118-74d5-4963-a0c2-04d8f863eea3&quot;, &quot;identifiertype&quot;: &quot;openid&quot;}], &quot;user_id&quot;: &quot;org.cnx.user-f7887118-74d5-4963-a0c2-04d8f863eea3&quot;, &quot;suffix&quot;: null, &quot;firstname&quot;: null, &quot;title&quot;: null, &quot;middlename&quot;: null, &quot;lastname&quot;: null, &quot;imageurl&quot;: null, &quot;otherlangs&quot;: null, &quot;affiliationinstitution_url&quot;: null, &quot;email&quot;: null, &quot;version&quot;: null, &quot;location&quot;: null, &quot;recommendations&quot;: null, &quot;preferredlang&quot;: null, &quot;fullname&quot;: &quot;foobar User&quot;, &quot;homepage&quot;: null, &quot;affiliationinstitution&quot;: null, &quot;biography&quot;: null}&#39;</span>
+
+
+<span class="sd">&gt;&gt;&gt; u = usermodel.User()</span>
+<span class="sd">&gt;&gt;&gt; u.fullname=&quot;paul&quot;</span>
+<span class="sd">&gt;&gt;&gt; i = usermodel.Identifier()</span>
+<span class="sd">&gt;&gt;&gt; i.identifierstring = &quot;http://fake.open.id&quot;</span>
+<span class="sd">&gt;&gt;&gt; i.identifiertype = &quot;openid&quot;</span>
+<span class="sd">&gt;&gt;&gt; u.identifiers=[i,]</span>
+<span class="sd">&gt;&gt;&gt; db_session.add(u)</span>
+<span class="sd">&gt;&gt;&gt; db_session.commit()</span>
+<span class="sd">&gt;&gt;&gt; </span>
+
+
+
+<span class="sd">&gt;&gt;&gt; u = usermodel.User()</span>
+<span class="sd">&gt;&gt;&gt; d = {&#39;fullname&#39;:&#39;bob&#39;, &#39;identifiers&#39;:[{&#39;identifierstring&#39;:&#39;http://bob@myopenid.com&#39;, &#39;identifiertype&#39;:&#39;openid&#39;},]}</span>
+<span class="sd">&gt;&gt;&gt; u.from_dict(d)</span>
+<span class="sd">&gt;&gt;&gt; u</span>
+<span class="sd">bob-org.cnx.user-00bb0cae-970b-4fc6-87be-0b8b3da35187</span>
+<span class="sd">&gt;&gt;&gt; u.fullname</span>
+<span class="sd">&#39;bob&#39;</span>
+<span class="sd">&gt;&gt;&gt; u.identifiers</span>
+<span class="sd">[&lt;rhaptos2.user.usermodel.Identifier object at 0x8073e3190&gt;]</span>
+<span class="sd">&gt;&gt;&gt; u.identifiers[0]</span>
+<span class="sd">&lt;rhaptos2.user.usermodel.Identifier object at 0x8073e3190&gt;</span>
+<span class="sd">&gt;&gt;&gt; u.identifiers[0].identifierstring</span>
+<span class="sd">&#39;http://bob@myopenid.com&#39;</span>
+<span class="sd">&gt;&gt;&gt; db_session.add(u)</span>
+<span class="sd">&gt;&gt;&gt; db_session.commit()</span>
+
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Table</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">or_</span><span class="p">,</span>
+                        <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span>
+                        <span class="n">Text</span><span class="p">,</span> <span class="n">Enum</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">relationship</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy.types</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+
+<span class="kn">from</span> <span class="nn">cnxbase</span> <span class="kn">import</span> <span class="n">CNXBase</span>
+
+<span class="c">#shared session from backend module, for pooling</span>
+
+<span class="kn">from</span> <span class="nn">rhaptos2.user.backend</span> <span class="kn">import</span> <span class="n">Base</span><span class="p">,</span> <span class="n">db_session</span>      
+<span class="kn">from</span> <span class="nn">rhaptos2.user</span> <span class="kn">import</span> <span class="n">dolog</span>
+<span class="kn">from</span> <span class="nn">rhaptos2.common.err</span> <span class="kn">import</span> <span class="n">Rhaptos2Error</span>
+
+
+<span class="c">############## JSON SUpport </span>
+<span class="c">## COde that supports converting to json resides in object.</span>
+<span class="c">## code that supports converting form json to object seems to sit best externally</span>
+<span class="c">##in both cases shared code resuse seems likely ewe shall move this elsewhere.</span>
+
+
+<span class="c">################## </span>
+
+<div class="viewcode-block" id="Identifier"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.Identifier">[docs]</a><span class="k">class</span> <span class="nc">Identifier</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span> <span class="n">CNXBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The external-to-cnx, globally unique identifer string that </span>
+<span class="sd">       is the &#39;username&#39; a person claims to be, and needs verification</span>
+<span class="sd">       from a thrid party to us, the relying party.</span>
+
+<span class="sd">    A leaf node as it were (no children in ER diagram)</span>
+
+<span class="sd">    The multiple inheritence from CNXBase gives us a range of to and from JSON methods</span>
+<span class="sd">    These are mostly overridden in User below. Cut and Paste occurs but is iminimised with  inheritence.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__tablename__</span>   <span class="o">=</span> <span class="s">&quot;cnxidentifier&quot;</span>
+
+    <span class="n">identifierstring</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">identifiertype</span>   <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>  <span class="c"># (Enum, &quot;persona&quot;, &quot;openid&quot;)</span>
+    <span class="n">user_id</span>          <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s">&quot;cnxuser.user_id&quot;</span><span class="p">))</span>
+    
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifierstring</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">identifiertype</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifierstring</span> <span class="o">=</span> <span class="n">identifierstring</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifiertype</span> <span class="o">=</span> <span class="n">identifiertype</span>
+
+
+
+<span class="c">###########</span>
+   
+</div>
+<div class="viewcode-block" id="User"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User">[docs]</a><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">,</span> <span class="n">CNXBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;declarative class for user_details</span>
+
+<span class="sd">    1. setattr and getattr are the &quot;frontdoors&quot; for SA - __dict__</span>
+<span class="sd">    manipluatins are ignored </span>
+
+<span class="sd">    2. This gives us a good in for pushing JSON to the db</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s">&quot;cnxuser&quot;</span> 
+    
+    <span class="n">user_id</span>                      <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">title</span>                        <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">firstname</span>                    <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">middlename</span>                   <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">lastname</span>                     <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">suffix</span>                       <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">fullname</span>                     <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">interests</span>                    <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">affiliationinstitution_url</span>   <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">affiliationinstitution</span>       <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">preferredlang</span>                <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">otherlangs</span>                   <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">imageurl</span>                     <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">location</span>                     <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">biography</span>                    <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">recommendations</span>              <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">homepage</span>                     <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">email</span>                        <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">version</span>                      <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+         
+    <span class="n">identifiers</span>  <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s">&quot;Identifier&quot;</span><span class="p">,</span> <span class="n">backref</span><span class="o">=</span><span class="s">&quot;cnxuser&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;start up a User object, optionally accepting</span>
+
+<span class="sd">        THis assumes a direct exact mapping form keyword to field</span>
+<span class="sd">        name (whioch assumes same back to the dbase. FOr our usecase</span>
+<span class="sd">        this is accetpable.</span>
+
+<span class="sd">        NB - setattr and getattr are the &quot;front door&quot; for SqlAlchemy onject manipulation.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_new_id</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span> 
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kwds</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">kwds</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="User.from_dict"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User.from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userprofile_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        We only support pushing JSON in - one object at a time There</span>
+<span class="sd">        is no obvious way to do it automatically over a hierarchy, so</span>
+<span class="sd">        manually look for the &quot;realtions&quot; and add them.  (backrefs</span>
+<span class="sd">        seriously complicate the obvious attack vector here)</span>
+
+<span class="sd">        Accepts: userprofile as defined in XXX</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">userprofile_dict</span> 
+
+        <span class="c">##userid test... also mapping of names  tests...</span>
+
+        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;identifiers&#39;</span><span class="p">:</span> <span class="n">Identifier</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s">&#39;identifiers&#39;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">identd</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s">&#39;identifiers&#39;</span><span class="p">]:</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="n">Identifier</span><span class="p">()</span>
+                    <span class="n">i</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">identd</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="c">### we could do self.__getattr__(&quot;identifiers&quot;) etc, but need reability.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+
+
+
+</div>
+<div class="viewcode-block" id="User.safe_type_out"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User.safe_type_out">[docs]</a>    <span class="k">def</span> <span class="nf">safe_type_out</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return the value of a coulmn field safely as something that json can use</span>
+<span class="sd">           This is essentially a JSONEncoder sublclass inside object - ...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">type</span><span class="p">),</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">DateTime</span><span class="p">):</span>
+            <span class="n">outstr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outstr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>             
+        <span class="k">return</span> <span class="n">outstr</span>
+</div>
+<div class="viewcode-block" id="User.to_dict"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return self as a dict, suitable for jsonifying &quot;&quot;&quot;</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__table__</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_type_out</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="c">#getattr(self, col.name) </span>
+
+            <span class="c"># &gt;&gt;&gt; type(col.type)</span>
+            <span class="c"># &lt;class &#39;sqlalchemy.types.String&#39;&gt;</span>
+              <span class="c"># &gt;&gt;&gt; import sqlalchemy.types</span>
+              <span class="c"># &gt;&gt;&gt; isinstance(y.type, sqlalchemy.types.String)</span>
+              <span class="c"># True</span>
+              <span class="c"># &gt;&gt;&gt; isinstance(y.type, sqlalchemy.types.Integer)</span>
+              <span class="c"># False</span>
+
+
+        <span class="c">### Manually for each &quot;child&quot; relationship, adjust the dict to be returned</span>
+        <span class="n">d</span><span class="p">[</span><span class="s">&#39;identifiers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> 
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifiers</span><span class="p">:</span> 
+            <span class="n">d</span><span class="p">[</span><span class="s">&#39;identifiers&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+</div>
+<div class="viewcode-block" id="User.jsonify"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User.jsonify">[docs]</a>    <span class="k">def</span> <span class="nf">jsonify</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Helper function that returns simple json repr &quot;&quot;&quot;</span>
+        <span class="n">selfd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">jsonstr</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">selfd</span><span class="p">)</span>  <span class="c"># here use the Json ENcoder???</span>
+        <span class="k">return</span> <span class="n">jsonstr</span>
+</div>
+<div class="viewcode-block" id="User.set_new_id"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.User.set_new_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_new_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If we are new user, be able to create uuid </span>
+<span class="sd">       </span>
+<span class="sd">        ### .. todo: A new User() autosets uuid. Is this correct</span>
+<span class="sd">        ### behaviour?</span>
+
+<span class="sd">        &gt;&gt;&gt; u = User()</span>
+<span class="sd">        &gt;&gt;&gt; x = u.set_new_id() # +doctest.ELLIPSIS</span>
+<span class="sd">        &gt;&gt;&gt; assert x == u.user_id</span>
+<span class="sd">          </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span>
+
+        <span class="n">uid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span>  <span class="s">&quot;org.cnx.user-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">uid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span>
+</div>
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="parse_json_user_schema"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.parse_json_user_schema">[docs]</a><span class="k">def</span> <span class="nf">parse_json_user_schema</span><span class="p">(</span><span class="n">jsonstr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ul;timately we should have multiple version handling. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jsonstr</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="verify_schema_version"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.verify_schema_version">[docs]</a><span class="k">def</span> <span class="nf">verify_schema_version</span><span class="p">(</span><span class="n">versionstr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This is a placeholder only.  </span>
+<span class="sd">    .. todo:: Handle versions sensibly</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">parse_json_user_schema</span>
+</div>
+<div class="viewcode-block" id="mkobjfromlistofdict"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.mkobjfromlistofdict">[docs]</a><span class="k">def</span> <span class="nf">mkobjfromlistofdict</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Glimmering of recursion style needed</span>
+<span class="sd">        However too fragile...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">### really I need to know when to stop - test for list / dict in vlaues///</span>
+    <span class="n">outl</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dict_of_fields</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">o</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dict_of_fields</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">dict_of_fields</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="n">outl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outl</span>
+
+</div>
+<div class="viewcode-block" id="put_user"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.put_user">[docs]</a><span class="k">def</span> <span class="nf">put_user</span><span class="p">(</span><span class="n">jsond</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a user_id, and a json_str representing the &quot;Updated&quot; fields</span>
+<span class="sd">       then update those fields for that user_id &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">uobj</span> <span class="o">=</span> <span class="n">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">dolog</span><span class="p">(</span><span class="s">&quot;INFO&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;FAiled to get user&quot;</span><span class="p">)</span>
+
+    <span class="c">#.. todo:: parser = verify_schema_version(None)</span>
+    <span class="n">updated_obj</span> <span class="o">=</span> <span class="n">populate_user</span><span class="p">(</span><span class="n">jsond</span><span class="p">,</span> <span class="n">uobj</span><span class="p">)</span>   
+    <span class="n">dolog</span><span class="p">(</span><span class="s">&quot;INFO&quot;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> &lt;- updated User&quot;</span> <span class="o">%</span> <span class="n">updated_obj</span><span class="p">)</span>     
+    <span class="n">dolog</span><span class="p">(</span><span class="s">&quot;INFO&quot;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> &lt;- session in use&quot;</span> <span class="o">%</span> <span class="n">db_session</span><span class="p">)</span>     
+    <span class="n">db_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">updated_obj</span><span class="p">);</span> <span class="n">db_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">updated_obj</span>
+
+</div>
+<div class="viewcode-block" id="populate_user"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.populate_user">[docs]</a><span class="k">def</span> <span class="nf">populate_user</span><span class="p">(</span><span class="n">incomingd</span><span class="p">,</span> <span class="n">userobj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a dict, and a User object, push dict into User object and return it.</span>
+
+<span class="sd">    .. todo:: validate and parse dict.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">### put every key in json into User(), manually handling</span>
+    <span class="c">### Identifier</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">incomingd</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;user_id&#39;</span><span class="p">):</span> <span class="k">continue</span> <span class="c">#.. todo:: test for user_id in a POST </span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">u&#39;identifier&#39;</span><span class="p">,</span> <span class="s">u&#39;identifiers&#39;</span><span class="p">):</span> <span class="c">## a poor manual approach...</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">userobj</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">incomingd</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c">### create a list of Identifer objects from the list of</span>
+            <span class="c">### identifier strings in JSON</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">incomingd</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">outl</span> <span class="o">=</span>  <span class="n">mkobjfromlistofdict</span><span class="p">(</span><span class="n">Identifier</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+            <span class="n">userobj</span><span class="o">.</span><span class="n">identifiers</span> <span class="o">=</span> <span class="n">outl</span>
+
+    <span class="k">return</span> <span class="n">userobj</span>
+    
+</div>
+<div class="viewcode-block" id="post_user"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.post_user">[docs]</a><span class="k">def</span> <span class="nf">post_user</span><span class="p">(</span><span class="n">jsond</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a dict representing the complete set</span>
+<span class="sd">       of fields then create a new user and those fields</span>
+
+<span class="sd">    I am getting a dictionary direct form Flask request object - want</span>
+<span class="sd">    to handle that myself with parser.</span>
+
+<span class="sd">    returns User object, for later saveing to DB&quot;&quot;&quot;</span>
+
+    <span class="n">u</span> <span class="o">=</span> <span class="n">User</span><span class="p">()</span>
+
+    <span class="c">#parser = verify_schema_version(None)</span>
+    <span class="c">#incomingd = parser(json_str)</span>
+
+    <span class="n">incomingd</span> <span class="o">=</span> <span class="n">jsond</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">populate_user</span><span class="p">(</span><span class="n">incomingd</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">db_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">u</span><span class="p">);</span> <span class="n">db_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">u</span>
+
+        </div>
+<div class="viewcode-block" id="get_user"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.get_user">[docs]</a><span class="k">def</span> <span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    returns a User object, when provided with user_id </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">### Now lets recreate it.</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">db_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;User ID Not found in this repo&quot;</span><span class="p">)</span>
+    <span class="c">### There is a uniq constraint on the table, but anyway...</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;Too many matches&quot;</span><span class="p">)</span>
+    
+    <span class="n">newu</span> <span class="o">=</span> <span class="n">rs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">newu</span>
+
+</div>
+<div class="viewcode-block" id="get_user_by_identifier"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.get_user_by_identifier">[docs]</a><span class="k">def</span> <span class="nf">get_user_by_identifier</span><span class="p">(</span><span class="n">unquoted_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+
+    <span class="c">### Now lets recreate it.</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">db_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Identifier</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Identifier</span><span class="o">.</span><span class="n">identifierstring</span> <span class="o">==</span> <span class="n">unquoted_id</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;Identifer ID Not found in this repo&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;Too many matches&quot;</span><span class="p">)</span>
+
+    <span class="c">#.. todo:: stop using indexes on rows - transform to fieldnames</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">rs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">user_id</span>
+    <span class="n">newu</span> <span class="o">=</span> <span class="n">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">newu</span> 
+
+</div>
+<div class="viewcode-block" id="get_user_by_name"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.get_user_by_name">[docs]</a><span class="k">def</span> <span class="nf">get_user_by_name</span><span class="p">(</span><span class="n">namefrag</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform a case insensitive search on fullname</span>
+
+<span class="sd">    I would like to offer at least two other searches, </span>
+<span class="sd">    specifying the fields to search, and a frag search across </span>
+<span class="sd">    many fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">db_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span>
+                     <span class="n">User</span><span class="o">.</span><span class="n">fullname</span><span class="o">.</span><span class="n">ilike</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%%%s%%</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">namefrag</span><span class="p">),</span>
+                     <span class="n">User</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">ilike</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%%%s%%</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">namefrag</span><span class="p">),</span>
+                     <span class="p">))</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">out_l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">:</span>
+        <span class="n">out_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out_l</span>
+</div>
+<div class="viewcode-block" id="get_all_users"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.get_all_users">[docs]</a><span class="k">def</span> <span class="nf">get_all_users</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; FOr search functionality&quot;&quot;&quot;</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">db_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">out_l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">:</span>
+        <span class="n">out_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">25</span><span class="p">:</span> <span class="k">break</span>
+    <span class="c"># ..todo:: the worst limiting case ever... </span>
+    <span class="k">return</span> <span class="n">out_l</span>
+
+
+</div>
+<div class="viewcode-block" id="delete_user"><a class="viewcode-back" href="../../../usermodel.html#rhaptos2.user.usermodel.delete_user">[docs]</a><span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="n">security_token</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="n">Rhaptos2Error</span><span class="p">(</span><span class="s">&quot;delete user not supported&quot;</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">close_session</span><span class="p">():</span>
+    <span class="n">db_session</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../static/rhaptos2userlogo.jpg" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Rhaptos2 User Server</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Authors.txt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

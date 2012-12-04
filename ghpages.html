@@ -36,6 +36,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -90,6 +93,14 @@ mkdir -p -m 0755 $TMPREPO
 
 ### checkout gh-pages into TMP
 git clone git@github.com:Connexions/rhaptos2.user.git $TMPREPO
+
+### gh-pages thinks any _folder is special and sphinx breaks
+git mv static/ static
+find . -iname "*.html" | xargs sed -i "" -e "s/static/static/g"
+                                      ^^^^^
+                                      This is a BSD-ism
+                                      - remove on Linux
+
 cd $TMPREPO
 git checkout gh-pages
 
@@ -160,6 +171,9 @@ pre-built html into the right location in gh-pages.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >next</a> |</li>
