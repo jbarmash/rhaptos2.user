@@ -1,0 +1,177 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Setting up python packages to use Sphinx and Github Pages &mdash; Rhaptos2 User Server</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Rhaptos2 User Server" href="index.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Backend" href="backend.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="backend.html" title="Backend"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="setting-up-python-packages-to-use-sphinx-and-github-pages">
+<h1>Setting up python packages to use Sphinx and Github Pages<a class="headerlink" href="#setting-up-python-packages-to-use-sphinx-and-github-pages" title="Permalink to this headline">¶</a></h1>
+<p>We want to use <a class="reference external" href="http://sphinx-doc.org">Sphinx</a> to generate our documentation
+but then use github to host the documentation (not withstanding the excellent readthedocs.)</p>
+<p>Github pages are a realtively simple idea - create a branch with a special name (gh-pages)
+in your repo.  Whatever is in the root of that branch will be served from <a class="reference external" href="http://reponame.github.com">http://reponame.github.com</a>
+as if it was the document root.</p>
+<p>So our basic process will be to create an orphan branch in our repo called &#8220;gh-pages&#8221;,
+then generate the docs in the normal fashion, and copy over the docs to the new branch and commit.</p>
+<p>Obviously I would like to automate the complete process, of building the docs, but that will
+wait till we have greater control and comfort with creating venvs automatically and running
+docs within them (Its doable - just ...)</p>
+<div class="section" id="first-stage">
+<h2>First stage<a class="headerlink" href="#first-stage" title="Permalink to this headline">¶</a></h2>
+<p>We want to create a new orphan branch called gh-pages (orphans carry no history baggage so its neater)</p>
+<div class="highlight-python"><pre># cd into repo on disk
+$ git checkout --orphan gh-pages
+Switched to a new branch 'gh-pages'
+$ git rm -rf .
+$ echo "Initial commit" &gt; index.html
+$ git add index.html
+$ git commit -m "First cut for gh-pages"</pre>
+</div>
+<p>The above is basically a reworking of <a class="reference external" href="https://help.github.com/articles/creating-project-pages-manually">github instructions</a></p>
+<p>Now that we have on github a gh-pages branch, we want to put something in it.
+Create a file like the one below, in the root of say master.</p>
+<div class="highlight-python"><pre>#These might be parameters
+SRCDOCS=/home/pbrian/src/rhaptos2.user/docs/_build/html
+TMPREPO=/tmp/docs/user
+
+### get the last commit message
+cd $SRCDOCS
+MSG="Adding gh-pages docs for `git log -1 --pretty=short --abbrev-commit`"
+
+### clear the decks
+rm -rf $TMPREPO
+mkdir -p -m 0755 $TMPREPO
+
+### checkout gh-pages into TMP
+git clone git@github.com:Connexions/rhaptos2.user.git $TMPREPO
+cd $TMPREPO
+git checkout gh-pages
+
+### cp the docs over and commit
+cp -r $SRCDOCS/ $TMPREPO
+git add -A
+git commit -m "$MSG" &amp;&amp; git push origin gh-pages</pre>
+</div>
+<p>I am assuming that we have already built the documentation in branch &lt;master&gt; as in:</p>
+<div class="highlight-python"><pre>$ cd docs
+$ workon vuser
+$ (vuser) make clean &amp;&amp; make html</pre>
+</div>
+<p>This can all clearly be adjusted to suit each repo, and easily generic-isized.
+But it does the job - of creating a temporary clone of gh-pages, and bringing the
+pre-built html into the right location in gh-pages.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/rhaptos2userlogo.jpg" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setting up python packages to use Sphinx and Github Pages</a><ul>
+<li><a class="reference internal" href="#first-stage">First stage</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="backend.html"
+                        title="previous chapter">Backend</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="next chapter">Installation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ghpages.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="backend.html" title="Backend"
+             >previous</a> |</li>
+        <li><a href="index.html">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Authors.txt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
