@@ -1,0 +1,247 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Draft specification &mdash; Rhaptos2 User Server</title>
+    
+    <link rel="stylesheet" href="../_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Rhaptos2 User Server" href="../index.html" />
+    <link rel="prev" title="Views" href="../views.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../views.html" title="Views"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="draft-specification">
+<h1>Draft specification<a class="headerlink" href="#draft-specification" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="user-id">
+<h2>User ID<a class="headerlink" href="#user-id" title="Permalink to this headline">¶</a></h2>
+<p>We shall create a new, distributable and federatable user id of the
+follwoing form:</p>
+<div class="highlight-python"><pre>org.cnx.users.f81d4fae-7dec-11d0-a765-00a0c91e6bf6</pre>
+</div>
+<p>It is the repository domain name reversed, with uuid in urn string
+format.  This will give us a globally unique userid that is globally
+unique, linked to originating repo, so it can be traced back to a
+given source and fairly easily details requested from it.</p>
+</div>
+<div class="section" id="user-media-type">
+<h2>User Media Type<a class="headerlink" href="#user-media-type" title="Permalink to this headline">¶</a></h2>
+<p>A user media type is a JSON formatted document,
+A user-profile-document contains all user personal
+information we store.  Its fields are shown in <tt class="xref doc docutils literal"><span class="pre">user-details</span></tt></p>
+<div class="section" id="api">
+<h3>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h3>
+<p>We shall support the following APIs</p>
+</div>
+</div>
+<div class="section" id="get-user-details">
+<h2>GET user-details<a class="headerlink" href="#get-user-details" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><pre>curl http://www.cnx.org/user/org.cnx.user.f9647df6-cc6e-4885-9b53-254aa55a3383</pre>
+</div>
+<p>You should expect</p>
+<div class="highlight-python"><pre>HTTP/1.1 200 OK
+Server: nginx
+Date: Fri, 12 Oct 2012 23:33:14 GMT
+Content-Type: application/json; charset=utf-8
+Connection: keep-alive
+Status: 200 OK
+X-cnx-user-detail-version: 0.0.1</pre>
+</div>
+</div>
+<div class="section" id="errors">
+<h2>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h2>
+<p>There are two supported errors</p>
+<ul class="simple">
+<li>sending a malformed user id, that does not match parser.
+Not supported in version 0.0.1</li>
+<li>404 - Not found
+We could not find that user at this user-detail-store.
+A future service may be able to onward search for details</li>
+</ul>
+</div>
+<div class="section" id="post-user-details">
+<h2>POST user-details<a class="headerlink" href="#post-user-details" title="Permalink to this headline">¶</a></h2>
+<p>A POST request with a minimum document set out:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+     <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+     <span class="s">&quot;identifiers&quot;</span><span class="p">:</span> <span class="p">[</span>
+         <span class="s">&quot;http://openid.cnx.org/pbrian&quot;</span>
+                    <span class="p">],</span>
+     <span class="s">&quot;version&quot;</span><span class="p">:</span> <span class="s">&quot;0.0.1&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The above fields MUST be supplied, including the null ID
+If those fields are not supplied a 422 error will be generated.</p>
+<p>If any fields sent do not match the schema for the version, a 422 error will be generated</p>
+<p>Any other fields in the user-detail document scheme MAY
+be included.</p>
+<p>Otherwise a 201 processing will be generated.</p>
+</div>
+<div class="section" id="put-user-details">
+<h2>PUT user-details<a class="headerlink" href="#put-user-details" title="Permalink to this headline">¶</a></h2>
+<p>A PUT request with a minimum document set out:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+     <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="s">&quot;org.cnx.user.f9647df6-cc6e-4885-9b53-254aa55a3383&quot;</span><span class="p">,</span>
+     <span class="s">&quot;identifiers&quot;</span><span class="p">:</span> <span class="p">[</span>
+         <span class="s">&quot;http://openid.cnx.org/pbrian&quot;</span>
+                    <span class="p">],</span>
+     <span class="s">&quot;version&quot;</span><span class="p">:</span> <span class="s">&quot;0.0.1&quot;</span><span class="p">,</span>
+     <span class="s">&quot;name&quot;</span><span class="p">:{</span>
+                   <span class="s">&quot;title&quot;</span><span class="p">:</span> <span class="s">&quot;Mr&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;firstname&quot;</span><span class="p">:</span> <span class="s">&quot;Paul&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;middlenames&quot;</span><span class="p">:</span> <span class="s">&quot;Richard&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;lastname&quot;</span><span class="p">:</span>    <span class="s">&quot;Brian&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;suffix&quot;</span><span class="p">:</span>      <span class="s">&quot;&quot;</span><span class="p">,</span>
+                   <span class="s">&quot;fullname&quot;</span><span class="p">:</span> <span class="s">&quot;Paul Brian&quot;</span><span class="p">,</span>
+                   <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>All the fields sent in a PUT are replacing - they will completely replace
+all other fields in the document.</p>
+<p>It is an error not to supply at least one identifer and a valid, already existing
+id.</p>
+<p>Any other fields in the user-detail document scheme MAY
+be included, and will be overwritten.</p>
+</div>
+<div class="section" id="delete-user-detail">
+<h2>Delete user detail<a class="headerlink" href="#delete-user-detail" title="Permalink to this headline">¶</a></h2>
+<p>Not yet supported</p>
+</div>
+<div class="section" id="search">
+<h2>Search<a class="headerlink" href="#search" title="Permalink to this headline">¶</a></h2>
+<p>Single-term search in 0.0.1</p>
+<p>An important part of user details is the search function.
+We shall take the google-style approach:</p>
+<div class="highlight-python"><pre>curl http://www.cnx.org/user/search?q=paul
+
+q -&gt; query
+term -&gt; all characters following q= will be assumed to
+        be a single search term across email, fullname fields</pre>
+</div>
+<p>The results will be a JSON doc containing id, fullname, email and known identifers:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+<span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="s">&quot;org.cnx.user.f9647df6-cc6e-4885-9b53-254aa55a3383&quot;</span><span class="p">,</span>
+<span class="s">&quot;identifiers&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s">&quot;https://www.google.com/accounts/o8/id?id=AItOawlc7oYk8MNlwBgxCwMhLDqzXq1BXA4abbk&quot;</span><span class="p">,</span>
+    <span class="s">&quot;http://openid.cnx.org/pbrian&quot;</span><span class="p">,</span>
+    <span class="s">&quot;paul@mikadosoftware.com&quot;</span>
+<span class="p">],</span>
+<span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&quot;fullname&quot;</span><span class="p">:</span> <span class="s">&quot;Paul Brian&quot;</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Errors<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>A malformed query url will recv 422 error</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/rhaptos2userlogo.jpg" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Draft specification</a><ul>
+<li><a class="reference internal" href="#user-id">User ID</a></li>
+<li><a class="reference internal" href="#user-media-type">User Media Type</a><ul>
+<li><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#get-user-details">GET user-details</a></li>
+<li><a class="reference internal" href="#errors">Errors</a></li>
+<li><a class="reference internal" href="#post-user-details">POST user-details</a></li>
+<li><a class="reference internal" href="#put-user-details">PUT user-details</a></li>
+<li><a class="reference internal" href="#delete-user-detail">Delete user detail</a></li>
+<li><a class="reference internal" href="#search">Search</a></li>
+<li><a class="reference internal" href="#id1">Errors</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../views.html"
+                        title="previous chapter">Views</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/spec/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../views.html" title="Views"
+             >previous</a> |</li>
+        <li><a href="../index.html">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Authors.txt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

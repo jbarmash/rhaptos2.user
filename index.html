@@ -1,1 +1,157 @@
-Initial commit
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Rhaptos2 User &mdash; Rhaptos2 User Server</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Rhaptos2 User Server" href="#" />
+    <link rel="next" title="Backend" href="backend.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="backend.html" title="Backend"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="rhaptos2-user">
+<h1>Rhaptos2 User<a class="headerlink" href="#rhaptos2-user" title="Permalink to this headline">¶</a></h1>
+<p>Rhaptos2 User is a database that provides a REST-ful API to query open
+identifiers (OpenID, Mozilla Persona) and retrieve back the fuill
+details of a user within our system.</p>
+<div class="section" id="outline">
+<h2>Outline<a class="headerlink" href="#outline" title="Permalink to this headline">¶</a></h2>
+<p>We have a postgresql database, with two tables (cnxuser and cnxidentifier)
+cnxidentifier is the external thridparty identifier of our users (either openid
+or persona).  We store their identifier linked to their user details in cnxuser.</p>
+<p>The web server is a simple Flask server, that is run from run.py.
+Config is a .ini file. and the std developer version is in package root.
+Tests are in tests/ and expected to be run via runtests.py which then passes
+config details onto nosetest.</p>
+<p>It is expected to run the server from within a virtualenv - this can be setup
+usiong the requirements.txt file in package root and then <strong class="command">setup.py develop</strong>
+on the src of rhaptos2.user and rhaptos2.common.</p>
+<p>A script to do the above is in <em class="xref std std-ref">bamboo.scaffold.scripts</em></p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="backend.html">Backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sqlinjection.html">SQL Injection and SQLAlchemy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usermodel.html">Usermodel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="views.html">Views</a></li>
+</ul>
+</div>
+<p>Draft Specification:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spec/index.html">Draft specification</a></li>
+</ul>
+</div>
+<div class="section" id="related-projects">
+<h3>Related Projects<a class="headerlink" href="#related-projects" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference external" href="http://frozone.readthedocs.org">rhaptos2.repo</a></li>
+<li><a class="reference external" href="http://rhaptos2user.readthedocs.org">rhaptos2.user</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/rhaptos2userlogo.jpg" alt="Logo"/>
+            </a></p>
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Rhaptos2 User</a><ul>
+<li><a class="reference internal" href="#outline">Outline</a><ul>
+<li><a class="reference internal" href="#related-projects">Related Projects</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="backend.html"
+                        title="next chapter">Backend</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="backend.html" title="Backend"
+             >next</a> |</li>
+        <li><a href="#">Rhaptos2 User Server</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Authors.txt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
