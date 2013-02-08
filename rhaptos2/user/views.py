@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #! -*- coding: utf-8 -*-
 
-###  
+###
 # Copyright (c) Rice University 2012
 # This software is subject to
 # the provisions of the GNU Lesser General
@@ -70,7 +70,8 @@ def get_user_by_identifier():
 
     security_token = None
     try:
-        json_str = usermodel.get_user_by_identifier(unquoted_identifier)
+        user_obj = usermodel.get_user_by_identifier(unquoted_identifier)
+        json_str = user_obj.jsonify()
     except err.Rhaptos2Error, e:
         abort(404)
 
