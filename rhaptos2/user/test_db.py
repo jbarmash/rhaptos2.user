@@ -44,7 +44,7 @@ import os
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 CONFD_PATH = os.path.join(HERE, "../../local.ini")
-from rhaptos2.common.configuration import (
+from rhaptos2.user.configuration import (
     find_configuration_file,
     Configuration,
     )

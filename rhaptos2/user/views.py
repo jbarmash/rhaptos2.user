@@ -24,11 +24,9 @@ import uuid
 import requests
 import urllib
 
-from rhaptos2.common import log
-from rhaptos2.common import err
-from rhaptos2.common import conf
-
-from rhaptos2.user import get_app, dolog, usermodel
+from rhaptos2.user import (get_app, dolog,
+                           usermodel, log, err,
+                           conf)
 from rhaptos2.user.backend import db_session
 
 app = get_app()
