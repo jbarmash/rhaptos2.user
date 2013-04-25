@@ -2,8 +2,18 @@ language: python
 python:
   - "2.7"
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -r requirements.txt --use-mirrors
+install: 
+   pip install -r requirements.txt --use-mirrors
+#. bin/activate 
+   cd rhaptos2.common 
+   python setup.py develop
+   #cd rhaptos2.user/rhaptos/user 
+   #python run.py --debug --config=../../local.ini
+services: postgres
 # command to run tests, e.g. python setup.py test
 #script:  PLEASE CHANGE ME
+before_script:
+  - psql -c 'create database myapp_test;' -U postgres
 script: nosetests
+
 
