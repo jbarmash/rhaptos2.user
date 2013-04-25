@@ -41,6 +41,8 @@ Installation:
 
 ONE
 
+
+
 [![Build Status](https://travis-ci.org/jbarmash/rhaptos2.user.png)](https://travis-ci.org/jbarmash/rhaptos2.user.png)
 
 TWO
@@ -49,6 +51,9 @@ TWO
 THREE
 !https://travis-ci.org/jbarmash/rhaptos2.user.png!":https://travis-ci.org/jbarmash/rhaptos2.user.png
 
+.. figure:: https://travis-ci.org/jbarmash/rhaptos2.user.png 
+
+   Build Status
 ::
 
 
