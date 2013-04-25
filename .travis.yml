@@ -9,7 +9,7 @@ install:
    - python setup.py develop
    #cd rhaptos2.user/rhaptos/user 
    #python run.py --debug --config=../../local.ini
-services: postgres
+services: postgresql
 # command to run tests, e.g. python setup.py test
 #script:  PLEASE CHANGE ME
 before_script:
