@@ -1,0 +1,3 @@
+[submodule "rhaptos2.common"]
+	path = rhaptos2.common
+	url = https://github.com/Connexions/rhaptos2.common.git

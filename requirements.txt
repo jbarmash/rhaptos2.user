@@ -9,7 +9,6 @@ Werkzeug==0.8.3
 docutils==0.9.1
 logilab-astng==0.24.1
 logilab-common==0.58.1
--e git+https://github.com/Connexions/rhaptos2.common.git@48fe8fc4d3825aae0b1fba1d166bfbeacc0a2251#egg=rhaptos2.common-dev
 nose==1.2.1
 psycopg2==2.4.5
 pycrypto==2.6
