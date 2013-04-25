@@ -3,6 +3,7 @@ rhaptos2.user
 =============
 
 Build Status: 
+
 .. image:: https://travis-ci.org/jbarmash/rhaptos2.user.png 
    :alt: Travis CI Build Status
 
