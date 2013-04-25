@@ -24,11 +24,9 @@ import uuid
 import requests
 import urllib
 
-from rhaptos2.common import log
-from rhaptos2.common import err
-from rhaptos2.common import conf
-
-from rhaptos2.user import get_app, dolog, usermodel
+from rhaptos2.user import (get_app, dolog,
+                           usermodel, log, err,
+                           conf)
 from rhaptos2.user.backend import db_session
 
 app = get_app()
@@ -102,6 +100,9 @@ def get_user(user_id):
     resp.content_type='application/json'
     return resp
 
+@app.route('/register/', methods=["POST","GET"])
+def vw_registration():
+    return "TBC: A registration app here"
 
 @app.route('/user/', methods=["POST",])
 def vw_post_user():

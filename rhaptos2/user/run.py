@@ -19,8 +19,7 @@ This software is subject to the provisions of the GNU Lesser General
 Public License Version 2.1 (LGPL).  See LICENSE.txt for details.
 """
 
-from rhaptos2.common import runner
-from rhaptos2.user import make_app
+from rhaptos2.user import make_app, runner
 
 
 def main():

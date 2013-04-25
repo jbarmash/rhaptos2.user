@@ -41,7 +41,7 @@ from flask import (
     redirect, url_for, abort,
     )
 
-from rhaptos2.common import conf, log, err
+import conf, log, err
 from rhaptos2.user import backend
 
 import pkg_resources  # part of setuptools

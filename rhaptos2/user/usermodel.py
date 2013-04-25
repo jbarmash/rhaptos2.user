@@ -207,7 +207,7 @@ from cnxbase import CNXBase
 
 from rhaptos2.user.backend import Base, db_session      
 from rhaptos2.user import dolog
-from rhaptos2.common.err import Rhaptos2Error
+from rhaptos2.user.err import Rhaptos2Error
 
 
 ############## JSON SUpport 
