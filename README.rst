@@ -2,6 +2,10 @@
 rhaptos2.user
 =============
 
+Build Status: 
+.. image:: https://travis-ci.org/jbarmash/rhaptos2.user.png 
+   :target: http://travis-ci.org/jbarmash/rhaptos2.user
+
 Installation:
 
 1. create a clean venv and populate from requirements.txt
@@ -39,21 +43,7 @@ Installation:
 
 6. Also note shell.py will give you a command line to dbase for testing usermodel
 
-ONE
 
-
-
-[![Build Status](https://travis-ci.org/jbarmash/rhaptos2.user.png)](https://travis-ci.org/jbarmash/rhaptos2.user.png)
-
-TWO
-{<img src="https://travis-ci.org/jbarmash/rhaptos2.user.png" />}[https://travis-ci.org/jbarmash/rhaptos2.user.png]
-
-THREE
-!https://travis-ci.org/jbarmash/rhaptos2.user.png!":https://travis-ci.org/jbarmash/rhaptos2.user.png
-
-.. figure:: https://travis-ci.org/jbarmash/rhaptos2.user.png 
-
-   Build Status
 ::
 
 
